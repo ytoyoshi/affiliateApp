@@ -1,0 +1,28 @@
+version: 1.0
+runtime: docker
+build:
+  commands:
+    build:
+      - echo "Building with Docker..."
+      - echo "Build completed successfully"
+run:
+  runtime-version: latest
+  command: java -jar app.jar
+  network:
+    port: 8080
+    env: PORT
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: prod
+    - name: RDS_HOSTNAME
+      value: ${RDS_HOSTNAME}
+    - name: RDS_PORT
+      value: "3306"
+    - name: RDS_DB_NAME
+      value: productdb
+    - name: RDS_USERNAME
+      value: ${RDS_USERNAME}
+    - name: RDS_PASSWORD
+      value: ${RDS_PASSWORD}
+    - name: CORS_ALLOWED_ORIGINS
+      value: ${CORS_ALLOWED_ORIGINS}
