@@ -1,183 +1,311 @@
-# 商品管理システム
+# Affiliate Product Management System
 
-Spring Boot + React + TypeScript で構築された商品管理システムです。
+商品管理機能付きアフィリエイトアプリケーション
 
-## プロジェクト構成
+## 🏗️ アーキテクチャ
+
+```
+┌─────────────────┐    ┌──────────────────┐
+│   Frontend      │    │    Backend       │
+│   (Next.js)     │◄──►│  (Spring Boot)   │
+│   Port: 3000    │    │   Port: 8080     │
+└─────────────────┘    └──────────────────┘
+                                │
+                       ┌────────▼────────┐
+                       │   SQLite DB     │
+                       │ (Embedded File) │
+                       └─────────────────┘
+```
+
+## 🛠️ 技術スタック
+
+### バックエンド
+- **Framework**: Spring Boot
+- **Java Version**: 17
+- **Database**: SQLite (コンテナ内蔵)
+- **Build Tool**: Maven
+
+### フロントエンド
+- **Framework**: Next.js
+- **Node Version**: 18
+- **Rendering**: Server-Side Rendering (SSR)
+- **Styling**: TailwindCSS (推定)
+
+### インフラ（AWS）
+- **Container Orchestration**: AWS App Runner × 2
+- **CDN**: CloudFront
+- **Container Registry**: Amazon ECR
+
+## 📁 プロジェクト構成
 
 ```
 affiliateApp/
-├── product-api/          # Spring Boot バックエンド
-├── product-frontend/     # React TypeScript フロントエンド
+├── product-api/                 # バックエンド
+│   ├── src/
+│   │   ├── main/
+│   │   │   ├── java/
+│   │   │   └── resources/
+│   │   │       └── data/
+│   │   │           └── products.db
+│   │   └── test/
+│   ├── Dockerfile
+│   ├── pom.xml
+│   └── mvnw
+│
+├── product-frontend-nextjs/     # フロントエンド
+│   ├── src/
+│   ├── public/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── package-lock.json
+│
+├── docker-compose.yml           # ローカル開発用
 └── README.md
 ```
 
-## 必要な環境
+## 🚀 開発環境セットアップ
 
-- **Java**: 17以上
-- **Node.js**: 16以上
-- **npm**: 8以上
+### 前提条件
+- Docker Desktop (28.x+)
+- Git
 
-## セットアップ手順
-
-### 1. リポジトリのクローン
-
+### 1. プロジェクトクローン
 ```bash
 git clone <repository-url>
 cd affiliateApp
 ```
 
-### 2. バックエンド（Spring Boot）のセットアップ
+### 2. Docker Compose で起動
+```bash
+# バックグラウンドで起動
+docker compose up -d
 
+# ログ確認
+docker compose logs -f
+
+# 停止
+docker compose down
+```
+
+### 3. 個別起動（オプション）
+
+#### バックエンドのみ
 ```bash
 cd product-api
-
-# 依存関係の確認とビルド
-./mvnw clean install
-
-# アプリケーション起動
-./mvnw spring-boot:run
+docker build -t product-api:latest .
+docker run -d \
+  --name product-api-container \
+  -p 8080:8080 \
+  product-api:latest
 ```
 
-**バックエンドが正常に起動したことを確認:**
-- ブラウザで http://localhost:8080/api/products にアクセス
-- JSON形式で商品一覧が表示されること
-
-### 3. フロントエンド（React TypeScript）のセットアップ
-
-**新しいターミナル/コマンドプロンプトで実行:**
-
+#### フロントエンドのみ
 ```bash
-cd product-frontend
-
-# 依存関係のインストール
-npm install
-
-# 開発サーバー起動
-npm start
+cd product-frontend-nextjs
+docker build -t product-frontend:latest .
+docker run -d \
+  --name product-frontend-container \
+  -p 3000:3000 \
+  -e NEXT_PUBLIC_API_URL=http://localhost:8080/api \
+  product-frontend:latest
 ```
 
-**フロントエンドが正常に起動したことを確認:**
-- ブラウザで http://localhost:3000 が自動で開く
-- 商品一覧ページが表示されること
+## 🌐 アクセス
 
-## 起動確認
+| サービス | URL | 説明 |
+|---------|-----|------|
+| フロントエンド | http://localhost:3000 | Next.jsアプリケーション |
+| バックエンドAPI | http://localhost:8080/api | REST API |
+| ヘルスチェック | http://localhost:8080/actuator/health | アプリケーション状態確認 |
 
-### 両方のサーバーが起動している状態
-
-- **バックエンド**: http://localhost:8080
-- **フロントエンド**: http://localhost:3000
-
-### 機能確認
-
-1. **商品一覧表示**: 8つの商品がカード形式で表示される
-2. **商品検索**: 検索バーで「iPhone」「MacBook」等で絞り込み可能
-3. **検索クリア**: クリアボタンで全商品表示に戻る
-
-## API エンドポイント
-
-| メソッド | エンドポイント | 説明 |
-|---------|-------------|------|
-| GET | `/api/products` | 全商品取得 |
-| GET | `/api/products/{id}` | 商品詳細取得 |
-| GET | `/api/products/search?keyword={keyword}` | 商品検索 |
-| POST | `/api/products` | 商品作成 |
-| PUT | `/api/products/{id}` | 商品更新 |
-| DELETE | `/api/products/{id}` | 商品削除 |
-
-## データベース確認
-
-H2データベースのコンソールにアクセス可能:
-- URL: http://localhost:8080/h2-console
-- JDBC URL: `jdbc:h2:mem:testdb`
-- Username: `sa`
-- Password: (空白)
-
-## トラブルシューティング
-
-### バックエンドが起動しない場合
-
-```bash
-# ポート8080が使用中の場合、プロセスを確認
-lsof -i :8080
-
-# Javaバージョン確認
-java --version
-
-# プロジェクトの再ビルド
-./mvnw clean install
-```
-
-### フロントエンドが起動しない場合
-
-```bash
-# Node.jsバージョン確認
-node --version
-npm --version
-
-# node_modulesの再インストール
-rm -rf node_modules package-lock.json
-npm install
-
-# キャッシュクリア
-npm start -- --reset-cache
-```
-
-### CORS エラーが発生する場合
-
-Spring Bootの`ProductController.java`で以下が設定されていることを確認:
-
-```java
-@CrossOrigin(origins = "*") // 開発用設定
-```
-
-## 開発モード
-
-### ホットリロード
-
-- **フロントエンド**: ファイル保存時に自動更新
-- **バックエンド**: DevToolsにより自動再起動
-
-### ログ確認
-
-```bash
-# バックエンドログ
-./mvnw spring-boot:run
-
-# フロントエンドログ
-npm start
-```
-
-## 本番デプロイ準備
-
-### フロントエンドビルド
-
-```bash
-cd product-frontend
-npm run build
-```
-
-### バックエンドJAR作成
-
-```bash
-cd product-api
-./mvnw clean package
-```
-
-## 技術スタック
+## 🔧 環境変数
 
 ### バックエンド
-- **Spring Boot 3.5.x**
-- **Spring Web**
-- **Spring Data JPA**
-- **H2 Database**
-- **Java 17**
+```env
+SPRING_PROFILES_ACTIVE=sqlite
+DB_PATH=/app/data/products.db
+```
 
 ### フロントエンド
-- **React 18**
-- **TypeScript**
-- **Axios** (HTTP通信)
-- **Bootstrap 5** (UI)
+```env
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
+NODE_ENV=production
+PORT=3000
+HOSTNAME=0.0.0.0
+```
 
-## ライセンス
+## 📊 データベース
 
-MIT License
+### SQLite設定
+- データベースファイル: `/app/data/products.db`
+- コンテナに埋め込み型（永続化なし）
+- 開発・テスト環境向け
+
+### データベース確認
+```bash
+# コンテナ内でSQLite接続
+docker exec -it product-api-container sqlite3 /app/data/products.db
+
+# 商品数確認
+docker exec -it product-api-container sqlite3 /app/data/products.db "SELECT COUNT(*) FROM products;"
+```
+
+## 🚢 デプロイ
+
+### AWS App Runner構成
+
+#### 1. ECRにイメージプッシュ
+```bash
+# AWS ECRログイン
+aws ecr get-login-password --region ap-northeast-1 | \
+  docker login --username AWS --password-stdin <account-id>.dkr.ecr.ap-northeast-1.amazonaws.com
+
+# バックエンド
+docker tag product-api:latest <account-id>.dkr.ecr.ap-northeast-1.amazonaws.com/product-api:latest
+docker push <account-id>.dkr.ecr.ap-northeast-1.amazonaws.com/product-api:latest
+
+# フロントエンド  
+docker tag product-frontend:latest <account-id>.dkr.ecr.ap-northeast-1.amazonaws.com/product-frontend:latest
+docker push <account-id>.dkr.ecr.ap-northeast-1.amazonaws.com/product-frontend:latest
+```
+
+#### 2. App Runner設定
+
+**バックエンド (apprunner-backend.yaml)**
+```yaml
+version: 1.0
+runtime: docker
+run:
+  runtime-version: latest
+  command: java -jar app.jar
+  network:
+    port: 8080
+  env:
+    - name: SPRING_PROFILES_ACTIVE
+      value: sqlite
+    - name: DB_PATH
+      value: /app/data/products.db
+```
+
+**フロントエンド (apprunner-frontend.yaml)**
+```yaml
+version: 1.0
+runtime: docker
+run:
+  runtime-version: latest  
+  command: node server.js
+  network:
+    port: 3000
+  env:
+    - name: NEXT_PUBLIC_API_URL
+      value: https://your-backend-apprunner-url.ap-northeast-1.awsapprunner.com/api
+```
+
+#### 3. CloudFront設定
+- Origin: App Runner フロントエンドURL
+- キャッシュ設定: SSR対応
+- SEO最適化
+
+## 🔍 トラブルシューティング
+
+### よくある問題
+
+#### コンテナが起動しない
+```bash
+# ログ確認
+docker compose logs <service-name>
+
+# 詳細情報
+docker inspect <container-name>
+```
+
+#### API接続エラー
+```bash
+# ネットワーク確認
+docker network ls
+docker network inspect <network-name>
+
+# 環境変数確認
+docker exec -it <container-name> printenv
+```
+
+#### SQLiteデータベースエラー
+```bash
+# ファイル存在確認
+docker exec -it product-api-container ls -la /app/data/
+
+# 権限確認
+docker exec -it product-api-container stat /app/data/products.db
+```
+
+### ログ確認
+```bash
+# 全サービスログ
+docker compose logs -f
+
+# 特定サービスのログ
+docker compose logs -f product-api
+docker compose logs -f product-frontend
+```
+
+## 📈 パフォーマンス最適化
+
+### Dockerイメージ最適化
+- マルチステージビルド使用
+- 不要ファイル削除実装済み
+- Alpine Linuxベースイメージ使用
+
+### Next.js最適化
+- サーバーサイドレンダリング (SSR)
+- 静的最適化
+- イメージ最適化
+
+## 🔒 セキュリティ
+
+### コンテナセキュリティ
+- 非rootユーザー実行（フロントエンド）
+- 最小権限ファイルシステム
+- ヘルスチェック実装
+
+### API セキュリティ
+- CORS設定
+- 入力値検証
+- SQLインジェクション対策
+
+## 🧪 テスト
+
+```bash
+# ヘルスチェック
+curl http://localhost:8080/actuator/health
+
+# API エンドポイントテスト
+curl http://localhost:8080/api/products
+
+# フロントエンド確認
+curl http://localhost:3000
+```
+
+## 💰 コスト見積もり（AWS）
+
+| リソース | 月額概算 |
+|---------|----------|
+| App Runner × 2 | $15-30 |
+| CloudFront | $1-5 |
+| ECR | $1-3 |
+| **合計** | **$17-38** |
+
+## 🤝 貢献
+
+1. Forkしてください
+2. 機能ブランチを作成 (`git checkout -b feature/AmazingFeature`)
+3. 変更をコミット (`git commit -m 'Add some AmazingFeature'`)
+4. ブランチにプッシュ (`git push origin feature/AmazingFeature`)
+5. Pull Requestを作成
+
+## 📝 ライセンス
+
+このプロジェクトは [MIT License](LICENSE) の下で公開されています。
+
+## 📞 サポート
+
+問題や質問がある場合は、[Issues](../../issues) を作成してください。
