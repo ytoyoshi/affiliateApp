@@ -28,8 +28,6 @@
 ### フロントエンド
 - **Framework**: Next.js
 - **Node Version**: 18
-- **Rendering**: Server-Side Rendering (SSR)
-- **Styling**: TailwindCSS (推定)
 
 ### インフラ（AWS）
 - **Container Orchestration**: AWS App Runner × 2
